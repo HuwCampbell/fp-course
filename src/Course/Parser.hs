@@ -21,35 +21,33 @@ import Data.Char
 
 type Input = Chars
 
-data ParseResult a =
+data SpecificError =
     UnexpectedEof
   | ExpectedEof Input
   | UnexpectedChar Char
   | UnexpectedString Chars
+  deriving Eq
+
+data ParseResult a =
+    ParseError SpecificError
   | Result Input a
   deriving Eq
 
 instance Show a => Show (ParseResult a) where
-  show UnexpectedEof =
+  show (ParseError UnexpectedEof) =
     "Unexpected end of stream"
-  show (ExpectedEof i) =
+  show (ParseError (ExpectedEof i)) =
     stringconcat ["Expected end of stream, but got >", show i, "<"]
-  show (UnexpectedChar c) =
+  show (ParseError (UnexpectedChar c)) =
     stringconcat ["Unexpected character: ", show [c]]
-  show (UnexpectedString s) =
+  show (ParseError (UnexpectedString s)) =
     stringconcat ["Unexpected string: ", show s]
   show (Result i a) =
     stringconcat ["Result >", hlist i, "< ", show a]
 
 instance Functor ParseResult where
-  _ <$> UnexpectedEof =
-    UnexpectedEof
-  _ <$> ExpectedEof i =
-    ExpectedEof i
-  _ <$> UnexpectedChar c =
-    UnexpectedChar c
-  _ <$> UnexpectedString s =
-    UnexpectedString s
+  _ <$> ParseError e =
+    ParseError e
   f <$> Result i a =
     Result i (f a)
 
@@ -59,13 +57,7 @@ isErrorResult ::
   -> Bool
 isErrorResult (Result _ _) =
   False
-isErrorResult UnexpectedEof =
-  True
-isErrorResult (ExpectedEof _) =
-  True
-isErrorResult (UnexpectedChar _) =
-  True
-isErrorResult (UnexpectedString _) =
+isErrorResult (ParseError _) =
   True
 
 -- | Runs the given function on a successful parse result. Otherwise return the same failing parse result.
@@ -73,14 +65,8 @@ onResult ::
   ParseResult a
   -> (Input -> a -> ParseResult b)
   -> ParseResult b
-onResult UnexpectedEof _ =
-  UnexpectedEof
-onResult (ExpectedEof i) _ =
-  ExpectedEof i
-onResult (UnexpectedChar c) _ =
-  UnexpectedChar c
-onResult (UnexpectedString s)  _ =
-  UnexpectedString s
+onResult (ParseError e) _ =
+  ParseError e
 onResult (Result i a) k =
   k i a
 
@@ -98,7 +84,7 @@ unexpectedCharParser ::
   Char
   -> Parser a
 unexpectedCharParser c =
-  P (\_ -> UnexpectedChar c)
+  P (\_ -> ParseError (UnexpectedChar c))
 
 --- | Return a parser that always returns the given parse result.
 ---
@@ -459,7 +445,7 @@ thisMany =
 ageParser ::
   Parser Int
 ageParser =
-  (\k -> case read k of Empty  -> constantParser (UnexpectedString k)
+  (\k -> case read k of Empty  -> constantParser (ParseError (UnexpectedString k))
                         Full h -> pure h) =<< (list1 digit)
 
 -- | Write a parser for Person.firstName.

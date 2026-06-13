@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE RebindableSyntax #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Course.Core(
   Eq(..)
@@ -45,6 +46,7 @@ module Course.Core(
 , module Data.Char
 , ifThenElse
 , bool
+, type (~)
 ) where
 
 
@@ -86,6 +88,8 @@ import Prelude(
 import Data.String(
   IsString(..)
   )
+
+import Data.Type.Equality(type (~))
 
 import System.IO(
     getChar

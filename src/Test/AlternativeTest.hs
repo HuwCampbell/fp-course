@@ -28,7 +28,7 @@ import           Course.Parser
                 isErrorResult,
                 parse,
                 valueParser,
-                ParseResult(Result, UnexpectedEof) )
+                ParseResult(Result) )
 import           Course.Applicative ( (*>) )
 
 test_Alternative :: TestTree

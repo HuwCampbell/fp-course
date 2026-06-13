@@ -81,7 +81,7 @@ constantParserTest :: TestTree
 constantParserTest =
   testGroup "constantParserTest" [
       testCase "can return error result" $
-        parse (constantParser (UnexpectedEof :: ParseResult Int)) "abc" @?= (UnexpectedEof :: ParseResult Int)
+        parse (constantParser (ParseError UnexpectedEof :: ParseResult Int)) "abc" @?= (ParseError UnexpectedEof :: ParseResult Int)
     , testCase "can return ParseResult" $
         parse (constantParser (Result "xyz" 4)) "abc" @?= Result "xyz" 4
   ]
@@ -115,9 +115,9 @@ alternativeParserTest =
       testCase "first fails, second succeeds with no input" $
         parse (character ||| valueParser 'v') "" @?= Result "" 'v'
     , testCase "first always fails, second succeeds with no input" $
-        parse (constantParser UnexpectedEof ||| valueParser 'v') "" @?= Result "" 'v'
+        parse (constantParser (ParseError UnexpectedEof) ||| valueParser 'v') "" @?= Result "" 'v'
     , testCase "first always fails, second succeeds with input" $
-        parse (constantParser UnexpectedEof ||| valueParser 'v') "abc" @?= Result "abc" 'v'
+        parse (constantParser (ParseError UnexpectedEof) ||| valueParser 'v') "abc" @?= Result "abc" 'v'
     , testCase "takes first parse result when it succeeds" $
         parse (character ||| valueParser 'v') "abc" @?= Result "bc" 'a'
   ]
