@@ -93,7 +93,7 @@ product ::
   List Int
   -> Int
 product =
-  foldRight (*) 1
+  foldLeft (*) 1
 
 -- | Sum the elements of the list.
 --
@@ -108,7 +108,7 @@ sum ::
   List Int
   -> Int
 sum =
-  foldRight (+) 0
+  foldLeft (+) 0
 
 -- | Return the length of the list.
 --
@@ -240,12 +240,8 @@ flattenAgain =
 seqOptional ::
   List (Optional a)
   -> Optional (List a)
-seqOptional input =
-  case input of
-    x :. xs ->
-      twiceOptional (:.) x (seqOptional xs)
-    Nil ->
-      Full Nil
+seqOptional =
+  foldRight (twiceOptional (:.)) (Full Nil)
 
 -- | Find the first element in the list matching the predicate.
 --
@@ -320,8 +316,9 @@ produce ::
   (a -> a)
   -> a
   -> List a
-produce f seed =
-  seed :. produce f (f seed)
+produce f =
+  let go x = x :. go (f x)
+  in go
 
 -- | Do anything other than reverse a list.
 -- Is it even possible?
