@@ -113,7 +113,21 @@ toSpecialCharacter c =
 jsonString ::
   Parser Chars
 jsonString =
-  error "todo: Course.JsonParser#jsonString"
+  let
+    specialChar = do
+      c <- character
+      case toSpecialCharacter c of
+        Full cc ->
+          pure (fromSpecialCharacter cc)
+        Empty ->
+          unexpectedCharParser c
+
+    slashed =
+      is '\\' *> (specialChar ||| hexu)
+
+    thingy = slashed ||| noneof ('"' :. '\\' :. Nil)
+  in
+    between (is '"') (is '"') (list thingy) <* spaces
 
 -- | Parse a JSON rational.
 --
@@ -149,7 +163,10 @@ jsonString =
 jsonNumber ::
   Parser Rational
 jsonNumber =
-  error "todo: Course.JsonParser#jsonNumber"
+  P $ \i -> case readFloats i of
+    Empty -> ParseError (UnexpectedString i)
+    Full (n, z) -> Result z n
+
 
 -- | Parse a JSON true literal.
 --
@@ -163,7 +180,7 @@ jsonNumber =
 jsonTrue ::
   Parser Chars
 jsonTrue =
-  error "todo: Course.JsonParser#jsonTrue"
+  stringTok "true"
 
 -- | Parse a JSON false literal.
 --
@@ -177,7 +194,7 @@ jsonTrue =
 jsonFalse ::
   Parser Chars
 jsonFalse =
-  error "todo: Course.JsonParser#jsonFalse"
+  stringTok "false"
 
 -- | Parse a JSON null literal.
 --
@@ -191,7 +208,7 @@ jsonFalse =
 jsonNull ::
   Parser Chars
 jsonNull =
-  error "todo: Course.JsonParser#jsonNull"
+  stringTok "null"
 
 -- | Parse a JSON array.
 --
@@ -214,7 +231,7 @@ jsonNull =
 jsonArray ::
   Parser (List JsonValue)
 jsonArray =
-  error "todo: Course.JsonParser#jsonArray"
+  betweenSepbyComma '[' ']' jsonValue
 
 -- | Parse a JSON object.
 --
@@ -234,7 +251,8 @@ jsonArray =
 jsonObject ::
   Parser Assoc
 jsonObject =
-  error "todo: Course.JsonParser#jsonObject"
+  betweenSepbyComma '{' '}' ((,) <$> jsonString <* charTok ':' <*> jsonValue)
+
 
 -- | Parse a JSON value.
 --
@@ -250,8 +268,16 @@ jsonObject =
 -- Result >< [("key1",JsonTrue),("key2",JsonArray [JsonRational (7 % 1),JsonFalse]),("key3",JsonObject [("key4",JsonNull)])]
 jsonValue ::
   Parser JsonValue
-jsonValue =
-   error "todo: Course.JsonParser#jsonValue"
+jsonValue = do
+  spaces
+  JsonString         <$> jsonString
+    ||| JsonRational <$> jsonNumber
+    ||| JsonObject   <$> jsonObject
+    ||| JsonArray    <$> jsonArray
+    ||| JsonTrue     <$  jsonTrue
+    ||| JsonFalse    <$  jsonFalse
+    ||| JsonNull     <$  jsonNull
+
 
 -- | Read a file into a JSON value.
 --

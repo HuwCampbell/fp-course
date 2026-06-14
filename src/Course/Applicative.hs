@@ -328,12 +328,8 @@ sequence ::
   Applicative k =>
   List (k a)
   -> k (List a)
-sequence xs =
-  case xs of
-    ka :. rest ->
-      lift2 (:.) ka (sequence rest)
-    Nil ->
-      pure Nil
+sequence =
+  foldRight (lift2 (:.)) (pure Nil)
 
 -- | Replicate an effect a given number of times.
 --
@@ -389,11 +385,8 @@ filtering ::
   (a -> k Bool)
   -> List a
   -> k (List a)
-filtering f input =
-  case input of
-    Nil -> pure Nil
-    x :. xs ->
-      lift2 (\b rs -> if b then x :. rs else rs) (f x) (filtering f xs)
+filtering f  =
+  foldRight (\x -> lift2 (\b -> if b then (x :.) else id) (f x)) (pure Nil)
 
 -----------------------
 -- SUPPORT LIBRARIES --
