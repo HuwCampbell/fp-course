@@ -45,8 +45,8 @@ instance Traversable ExactlyOne where
     (a -> k b)
     -> ExactlyOne a
     -> k (ExactlyOne b)
-  traverse =
-    error "todo: Course.Traversable traverse#instance ExactlyOne"
+  traverse f (ExactlyOne e )=
+    ExactlyOne <$> f e
 
 instance Traversable Optional where
   traverse ::
@@ -54,8 +54,10 @@ instance Traversable Optional where
     (a -> k b)
     -> Optional a
     -> k (Optional b)
-  traverse =
-    error "todo: Course.Traversable traverse#instance Optional"
+  traverse _ Empty =
+    pure Empty
+  traverse f (Full e) =
+    Full <$> f e
 
 -- | Sequences a traversable value of structures to a structure of a traversable value.
 --
@@ -72,7 +74,17 @@ sequenceA ::
   t (k a)
   -> k (t a)
 sequenceA =
-  error "todo: Course.Traversable#sequenceA"
+  traverse id
+
+
+traverse_ ::
+  (Applicative k, Traversable t) =>
+  (a -> k b)
+  -> t a
+  -> k ()
+traverse_ f =
+  void . traverse f
+
 
 instance (Traversable f, Traversable g) =>
   Traversable (Compose f g) where

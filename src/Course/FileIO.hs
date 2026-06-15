@@ -10,6 +10,7 @@ import Course.Applicative
 import Course.Monad
 import Course.Functor
 import Course.List
+import Course.Traversable
 
 {-
 
@@ -85,8 +86,9 @@ printFile ::
   FilePath
   -> Chars
   -> IO ()
-printFile =
-  error "todo: Course.FileIO#printFile"
+printFile name content = do
+  putStrLn ("============ " ++ name)
+  putStrLn content
 
 -- Given a list of (file name and file contents), print each.
 -- Use @printFile@.
@@ -94,15 +96,15 @@ printFiles ::
   List (FilePath, Chars)
   -> IO ()
 printFiles =
-  error "todo: Course.FileIO#printFiles"
+  traverse_ (uncurry printFile)
 
 -- Given a file name, return (file name and file contents).
 -- Use @readFile@.
 getFile ::
   FilePath
   -> IO (FilePath, Chars)
-getFile =
-  error "todo: Course.FileIO#getFile"
+getFile name =
+  (name,) <$> readFile name
 
 -- Given a list of file names, return list of (file name and file contents).
 -- Use @getFile@.
@@ -110,7 +112,7 @@ getFiles ::
   List FilePath
   -> IO (List (FilePath, Chars))
 getFiles =
-  error "todo: Course.FileIO#getFiles"
+  traverse getFile
 
 -- Given a file name, read it and for each line in that file, read and print contents of each.
 -- Use @getFiles@, @lines@, and @printFiles@.
@@ -118,13 +120,16 @@ run ::
   FilePath
   -> IO ()
 run =
-  error "todo: Course.FileIO#run"
+  printFiles <=< getFiles . lines <=< readFile
 
 -- /Tip:/ use @getArgs@ and @run@
 main ::
   IO ()
-main =
-  error "todo: Course.FileIO#main"
+main = do
+  args <- getArgs
+  case args of
+    a :. _ -> run a
+    _ -> putStrLn "Usage: main FILE"
 
 ----
 
